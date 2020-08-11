@@ -8,6 +8,7 @@
       </div>
       <!-- 登录表单区域 -->
       <el-form
+        ref="loginFormRef"
         :model="loginForm"
         label-width="0px"
         :rules="loginFormRules"
@@ -26,8 +27,8 @@
           ></el-input>
         </el-form-item>
         <el-form-item class="btns">
-          <el-button type="primary">登录</el-button>
-          <el-button type="info">重置</el-button>
+          <el-button type="primary" @click="login">登录</el-button>
+          <el-button type="info" @click="resetLoginFormRef">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -40,8 +41,8 @@ export default {
     return {
       // 登录数据绑定表单的对象
       loginForm: {
-        username: "zs",
-        password: "asd",
+        username: "admin",
+        password: "123456",
       },
       // 表单验证规则对象
       loginFormRules: {
@@ -57,6 +58,31 @@ export default {
         ],
       },
     };
+  },
+  methods: {
+    resetLoginFormRef() {
+      console.log(this);
+      this.$refs.loginFormRef.resetFields();
+      // 表单重置功能
+    },
+    login() {
+      this.$refs.loginFormRef.validate(async (valid) => {
+        console.log(valid);
+        if (!valid) return;
+        // 表单登录预验证
+        const { data: res } = await this.$http.post("login", this.loginForm);
+        console.log(res);
+        if (res.meta.status !== 200) return this.$message.error("登录失败");
+        this.$message.success("登录成功");
+        const token = res.data.token;
+        // 1.将登录成功之后的 token,保存客户端的sessionStorage
+        // 1.1 项目中除了登录之外的其他API接口,必须在登录之后才能访问
+        // 1.2 token 只应在当前网站打开期间生效，所以将 token 保存在sessionStorage中
+        window.sessionStorage.setItem("token", token);
+        // 2.通过编程式导航跳转到后台主页，路由地址是 /home
+        this.$router.push("/home")
+      });
+    },
   },
   //生命周期 - 创建完成（访问当前this实例）
   created() {},
